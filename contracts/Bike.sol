@@ -59,7 +59,7 @@ contract Bike is Ownable {
     /**
     @notice user should firstly call approve for this contract using his credits
     @param _bikeID ID of bike which the user want to rent
-    @param _deposit ID of bike which the user want to rent
+    @param _deposit number of credits which the user want to deposit
     */
     function rentBike(uint256 _bikeID, uint256 _deposit) 
         onlyValidDeposit(_deposit)
@@ -131,6 +131,7 @@ contract Bike is Ownable {
     @notice reset bike status in case user do not withdraw token in order to allow next renting. 
             In the meanwhile, burn tokens by sending to address 0x0000000000000000000000000000000000000000
     @param _bikeID bike ID
+    @param _address address of user who do not withdraw or can not withdraw due to expired time
     */
     function burnExpiredToken(uint256 _bikeID, address _address) 
         onlyOwner 
