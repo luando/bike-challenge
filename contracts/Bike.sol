@@ -4,12 +4,11 @@ import "./Ownable.sol";
 import "./library/StandardToken.sol";
 import "./library/SafeMath.sol";
 
-
 contract Bike is Ownable {
     using SafeMath for uint256;
 
     // using this state variable for store all bikes (consist of bike ID and time to purchase) which a user are renting.
-    mapping (address => mapping ( uint256 => uint256)) public rentors;
+    mapping (address => mapping ( uint256 => Info)) public rentors;
 
     // list of bikes are using for rent. This variable is used for query available bikes and also for checking offline when burn tokens
     mapping(uint256 => address) public bikeList;
@@ -20,6 +19,11 @@ contract Bike is Ownable {
     uint256 public credit = 100000000;// 100 token for 1 credit
     //token address
     StandardToken public BikeToken;
+    
+    struct Info{
+        uint256 rentingTime;
+        uint256 deposit;
+    }
 
     /**
     @notice constructor
@@ -34,7 +38,8 @@ contract Bike is Ownable {
     @param _bikeID ID of bike
     */
     modifier onlyValidTime(uint256 _bikeID){
-        require(rentors[msg.sender][_bikeID] + allotedTime > now, "should not allow to withdraw after expire");
+        Info memory rent = rentors[msg.sender][_bikeID];
+        require(rent.rentingTime + allotedTime > now, "should not allow to withdraw after expire");
         _;
     }
 
@@ -69,7 +74,8 @@ contract Bike is Ownable {
         require(BikeToken.transferFrom(msg.sender, address(this), _deposit));
 
         //update renting history 
-        rentors[msg.sender][_bikeID] = now;
+        rentors[msg.sender][_bikeID] = Info(now, _deposit);
+        
 
         //update bike status
         bikeList[_bikeID] = msg.sender;
@@ -83,14 +89,16 @@ contract Bike is Ownable {
         onlyValidTime(_bikeID)
         external{
         
+        Info memory rent = rentors[msg.sender][_bikeID];    
+        uint256 amount = rent.deposit;
         //update renting history 
-        rentors[msg.sender][_bikeID] = 0;
+        rentors[msg.sender][_bikeID] = Info(0,0);
 
         //update bike status
         bikeList[_bikeID] = address(0x0);
 
         // transfer tokens to user
-        require(BikeToken.transfer(msg.sender, credit.mul(upTime)), "can not return tokens to sender");
+        require(BikeToken.transfer(msg.sender, amount), "can not return tokens to sender");
     }
 
     /** 
@@ -136,11 +144,13 @@ contract Bike is Ownable {
     function burnExpiredToken(uint256 _bikeID, address _address) 
         onlyOwner 
         external{
-        require(rentors[msg.sender][_bikeID] + allotedTime < now, "should not allow to burn before expired");
+        Info memory rent = rentors[msg.sender][_bikeID];
+        uint256  amount = rent.deposit;
+        require(rent.rentingTime + allotedTime < now, "should not allow to burn before expired");
         //reset bikes list status and reset rentors status
         bikeList[_bikeID] = address(0x0);
-        rentors[_address][_bikeID] = 0;
-        require(BikeToken.transfer(address(0x0), credit.mul(upTime)), "can not burn tokens");
+        rentors[_address][_bikeID] = Info(0,0);
+        require(BikeToken.transfer(address(0x0), amount), "can not burn tokens");
     }
 
 }
