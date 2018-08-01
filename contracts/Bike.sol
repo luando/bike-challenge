@@ -136,6 +136,7 @@ contract Bike is Ownable {
     function burnExpiredToken(uint256 _bikeID, address _address) 
         onlyOwner 
         external{
+        require(rentors[msg.sender][_bikeID] + allotedTime < now, "should not allow to burn before expired");
         //reset bikes list status and reset rentors status
         bikeList[_bikeID] = address(0x0);
         rentors[_address][_bikeID] = 0;
