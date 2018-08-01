@@ -6,25 +6,33 @@ var controller = require('./controller');
  * GET API
  */
 router.get('/api/getAllotedTime', (req,res) => {
-    // res.send('get api')
     controller.getAllotedTime(req,res);
 });
 router.get('/api/getCredit', (req,res) => {
-    // res.send('get api')
     controller.getCreditFromSmartContract(req,res);
 });
 router.get('/api/getUpTime', (req,res) => {
-    // res.send('get api')
     controller.getUpTimeFromSmartContract(req,res);
 });
 router.get('/api/getBikeStatus/', (req,res) => {
-    // res.send('get api')
     controller.getBikeStatus(req,res);
 });
 
 router.get('/api/getRentingTime/', (req,res) => {
-    // res.send('get api')
     controller.getRentingTime(req,res);
 });
+router.get('/api/getTokenBalance/', (req,res) => {
+    controller.getTokenBalance(req,res);
+});
+router.get('/api/getAllowance/', (req,res) => {
+    controller.getAllowance(req,res);
+});
+router.get('/api/getTotalSupply', (req,res) => {
+    controller.getTotalSupply(req,res);
+});
+router.get('/api/getRate', (req,res) => {
+    controller.getRate(req,res);
+});
+
 
 module.exports = router;

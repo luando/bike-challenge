@@ -1,5 +1,10 @@
+// variables for interacting with Bike.sol conract
 var bikeContract = require('./contract').bikeContract;
 var bikeContractAddress = require('./contract').bikeContractAddress;
+
+// variables for interacting with BikeToken.sol contract
+var bikeTokenContract = require('./contract').bikeTokenContract;
+var bikeTokenContractAddress = require('./contract').bikeTokenContractAddress;
 
 var Container = {
     /**
@@ -103,7 +108,91 @@ var Container = {
                 data: re
             });
         });
+    },
+
+    /**
+     * Get BikeToken balance of an address
+     * @func getTokenBalance
+     */
+    getTokenBalance: function (req, res) {
+        var address = req.query.address;
+        bikeTokenContract.at(bikeTokenContractAddress).balanceOf(address, {}, function (er, re) {
+            if (er) {
+                return res.send({
+                    status: 'error',
+                    error: 'can not get balance of this address'
+                });
+            }
+
+            return res.send({
+                status: 'success',
+                data: re
+            });
+        });
+    },
+
+    /**
+     * Get the amount of tokens that an owner allowed to a spender.
+     * @func getAllowance
+     */
+    getAllowance: function (req, res) {
+        var owner = req.query.owner;
+        var spender = req.query.spender;
+        bikeTokenContract.at(bikeTokenContractAddress).allowance(owner, spender, {}, function (er, re) {
+            if (er) {
+                return res.send({
+                    status: 'error',
+                    error: 'can not get allowance value'
+                });
+            }
+
+            return res.send({
+                status: 'success',
+                data: re
+            });
+        });
+    },
+
+    /**
+     * Get total supply
+     * @func getTotalSupply
+     */
+    getTotalSupply: function (req, res) {
+        bikeTokenContract.at(bikeTokenContractAddress).totalSupply({}, function (er, re) {
+            if (er) {
+                return res.send({
+                    status: 'error',
+                    error: 'can not get total supply'
+                });
+            }
+
+            return res.send({
+                status: 'success',
+                data: re
+            });
+        });
+    },
+
+    /**
+     * Get rate
+     * @func getRate
+     */
+    getRate: function (req, res) {
+        bikeTokenContract.at(bikeTokenContractAddress).rate({}, function (er, re) {
+            if (er) {
+                return res.send({
+                    status: 'error',
+                    error: 'can not get rate'
+                });
+            }
+
+            return res.send({
+                status: 'success',
+                data: re
+            });
+        });
     }
+
 }
 
 module.exports = Container;
