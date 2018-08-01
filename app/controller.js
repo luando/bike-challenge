@@ -95,7 +95,7 @@ var Container = {
     getRentingTime: function (req, res) {
         var id = req.query.id;
         var address = req.query.address;
-        bikeContract.at(bikeContractAddress).rentors(address, id, {}, function (er, re) {
+        bikeContract.at(bikeContractAddress).getRentingTime(address, id, {}, function (er, re) {
             if (er) {
                 return res.send({
                     status: 'error',
@@ -110,6 +110,27 @@ var Container = {
         });
     },
 
+    /**
+     * Get deposit of a user with bikeID in smartcontract
+     * @func getDeposit
+     */
+    getDeposit: function (req, res) {
+        var id = req.query.id;
+        var address = req.query.address;
+        bikeContract.at(bikeContractAddress).getDeposit(address, id, {}, function (er, re) {
+            if (er) {
+                return res.send({
+                    status: 'error',
+                    error: 'can not get deposit for this case'
+                });
+            }
+
+            return res.send({
+                status: 'success',
+                data: re
+            });
+        });
+    },
     /**
      * Get BikeToken balance of an address
      * @func getTokenBalance

@@ -21,6 +21,9 @@ router.get('/api/getBikeStatus/', (req,res) => {
 router.get('/api/getRentingTime/', (req,res) => {
     controller.getRentingTime(req,res);
 });
+router.get('/api/getDeposit/', (req,res) => {
+    controller.getDeposit(req,res);
+});
 router.get('/api/getTokenBalance/', (req,res) => {
     controller.getTokenBalance(req,res);
 });

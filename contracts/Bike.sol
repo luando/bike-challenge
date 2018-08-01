@@ -153,4 +153,29 @@ contract Bike is Ownable {
         require(BikeToken.transfer(address(0x0), amount), "can not burn tokens");
     }
 
+    /**
+    @notice get renting time
+    @param _bikeID bike ID
+    */
+    function getRentingTime(address _add, uint256 _bikeID)
+        view 
+        public
+        returns(uint256){
+        Info memory rent = rentors[_add][_bikeID];
+        return rent.rentingTime;
+    }
+
+
+    /**
+    @notice get deposit
+    @param _bikeID bike ID
+    */
+    function getDeposit(address _add, uint256 _bikeID)
+        view 
+        public
+        returns(uint256){
+        Info memory rent = rentors[_add][_bikeID];
+        return rent.deposit;
+    }
+
 }
