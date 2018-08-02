@@ -98,9 +98,9 @@ contract('Bike', function (accounts) {
             return BikeTokenInstance.approve(bikeInstance.address, 300000000, { from: accounts[1] });
         }).then(async () => {
             try {
-                await  bikeInstance.rentBike(1, 300000000, { from: accounts[1] });
+                await bikeInstance.rentBike(1, 300000000, { from: accounts[1] });
             }
-            catch(error){
+            catch (error) {
                 assertJump(error);
             }
         })
@@ -115,7 +115,7 @@ contract('Bike', function (accounts) {
         }).then((bef) => {
             before = bef.valueOf();
             return bikeInstance.withdrawToken(1, { from: accounts[0] });
-        }).then( () => {
+        }).then(() => {
             return BikeTokenInstance.balanceOf.call(accounts[0]);
         }).then((aft) => {
             after = aft.valueOf();
@@ -123,4 +123,84 @@ contract('Bike', function (accounts) {
         })
     })
 
+    it("it should be failed for withdraw token twice", () => {
+        return Bike.deployed().then(async (instance) => {
+            bikeInstance = instance;
+            try {
+                await bikeInstance.withdrawToken(1, { from: accounts[0] });
+            }
+            catch (error) {
+                assertJump(error);
+            }
+        })
+    })
+
+    it("it should be true for transfer ownership of a bike", () => {
+        return Bike.deployed().then((instance) => {
+            bikeInstance = instance;
+            return web3.eth.sendTransaction({ value: web3.toWei('1', 'ether'), to: BikeTokenInstance.address, from: accounts[0] });
+        }).then(() => {
+            return BikeTokenInstance.approve(bikeInstance.address, 300000000, { from: accounts[0] });
+        }).then(() => {
+            return bikeInstance.rentBike(1, 300000000, { from: accounts[0] });
+        }).then(() => {
+            return bikeInstance.transferBike(1, accounts[1], { from: accounts[0] });
+        }).then(() => {
+            return bikeInstance.bikeList.call(1);
+        }).then((add) => {
+            assert.equal(add, accounts[1], 'transfer ownership is not correct');
+            assert.notEqual(add, accounts[0], 'transfer ownership is not correct');
+        })
+    })
+
+    it("it should be true for withdraw tokens after changing ownership", () => {
+        let before;
+        let after;
+        return Bike.deployed().then((instance) => {
+            bikeInstance = instance;
+            return web3.eth.sendTransaction({ value: web3.toWei('1', 'ether'), to: BikeTokenInstance.address, from: accounts[0] });
+        }).then(() => {
+            return BikeTokenInstance.approve(bikeInstance.address, 300000000, { from: accounts[0] });
+        }).then(() => {
+            return bikeInstance.rentBike(3, 300000000, { from: accounts[0] });
+        }).then(() => {
+            //transfer ownership to account 2
+            return bikeInstance.transferBike(3, accounts[2], { from: accounts[0] });
+        }).then(() => {
+            return BikeTokenInstance.balanceOf.call(accounts[2]);
+        }).then((bef) => {
+            before = bef.valueOf();
+            //withdraw tokens with account 2
+            return bikeInstance.withdrawToken(3, { from: accounts[2] });
+        }).then(() => {
+            return BikeTokenInstance.balanceOf.call(accounts[2]);
+        }).then((aft) => {
+            after = aft.valueOf();
+            assert.equal(after - before, 300000000, 'transfer ownership is not correct');
+        })
+    })
+
+    it("it should be failed if old owner try to withdraw tokens after changing ownership", () => {
+        let before;
+        let after;
+        return Bike.deployed().then((instance) => {
+            bikeInstance = instance;
+            return web3.eth.sendTransaction({ value: web3.toWei('1', 'ether'), to: BikeTokenInstance.address, from: accounts[0] });
+        }).then(() => {
+            return BikeTokenInstance.approve(bikeInstance.address, 300000000, { from: accounts[0] });
+        }).then(() => {
+            return bikeInstance.rentBike(3, 300000000, { from: accounts[0] });
+        }).then(() => {
+            //transfer ownership to account 2
+            return bikeInstance.transferBike(3, accounts[2], { from: accounts[0] });
+        }).then(async () => {
+            try {
+                //withdraw tokens with account 2
+                await bikeInstance.withdrawToken(3, { from: accounts[0] });
+            }
+            catch (error) {
+                assertJump(error);
+            }
+        })
+    })
 });
