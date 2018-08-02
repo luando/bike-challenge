@@ -17,6 +17,9 @@ contract Bike is Ownable {
     uint256 public allotedTime = 86400 seconds; 
     uint256 public upTime = 3; // user must put up 3 time of credits
     uint256 public credit = 100000000;// 100 token for 1 credit
+    uint256 public expiredTime = 86400 seconds; // if user does not return his bike, his deposit is slashing
+
+    address public slashingTokenAddress = 0x00;
     //token address
     StandardToken public BikeToken;
     
@@ -58,6 +61,15 @@ contract Bike is Ownable {
     */
     modifier onlyValidDeposit(uint256 _deposit){
         require(credit.mul(upTime) == _deposit, "not enough credits");
+        _;
+    }
+
+    /**
+    @notice check sender is owner of bike
+    @param _bikeID amount of token deposit
+    */
+    modifier onlyBikeOwner(uint256 _bikeID){
+        require(bikeList[_bikeID] == msg.sender, "you are not owner");
         _;
     }
 
@@ -136,6 +148,28 @@ contract Bike is Ownable {
     }
 
     /**
+    @notice change expired time
+    @param _value change to new value
+    */
+    function setExpiredTime(uint256 _value)
+        onlyOwner 
+        external{
+        require(_value > 0, "should be greater than 0");
+        expiredTime = _value;
+    }
+
+    /**
+    @notice change slashing address
+    @param _add change to new value
+    */
+    function setSlashingAddress(address _add)
+        onlyOwner 
+        external{
+        require(_add != address(0x0), "should not be 0x0");
+        slashingTokenAddress = _add;
+    }
+
+    /**
     @notice reset bike status in case user do not withdraw token in order to allow next renting. 
             In the meanwhile, burn tokens by sending to address 0x0000000000000000000000000000000000000000
     @param _bikeID bike ID
@@ -176,6 +210,48 @@ contract Bike is Ownable {
         returns(uint256){
         Info memory rent = rentors[_add][_bikeID];
         return rent.deposit;
+    }
+
+    /**
+    @notice cut off tokens if user does not return bike at right time
+    @param _bikeID bike ID
+    @param _address address of user who do not return his bike after expired time
+    */
+    function slashing(uint256 _bikeID, address _address) 
+        onlyOwner 
+        external{
+        Info memory rent = rentors[msg.sender][_bikeID];
+        uint256  amount = rent.deposit;
+        
+        require(bikeList[_bikeID] == _address, "this user did not rent the bike"); // check owner ship
+        require(rent.deposit > 0 && rent.rentingTime > 0, "should not empty"); // check valid info
+        require(rent.rentingTime + allotedTime + expiredTime < now, "should not allow to slash tokens before expired"); //check expiration
+        
+        //reset bikes list status and reset rentors status
+        bikeList[_bikeID] = address(0x0);
+        rentors[_address][_bikeID] = Info(0,0);
+        require(BikeToken.transfer(slashingTokenAddress, amount), "can not slash tokens");
+    }
+
+    /**
+    @notice transfer bike
+    @param _bikeID bike ID
+    @param _address allow this user to own the bike
+    */
+    function transferBike(uint256 _bikeID, address _address) 
+        onlyBikeOwner(_bikeID)
+        external{
+        Info memory rent = rentors[msg.sender][_bikeID];
+        
+        require(rent.deposit > 0 && rent.rentingTime > 0, "should not be 0");
+        require(rent.rentingTime + allotedTime > now, "should not allow to transfer ownership because of expiration");
+        
+        //reset bikes list status and reset rentors status
+        rentors[msg.sender][_bikeID] = Info(0,0);
+
+        // transfer ownership
+        bikeList[_bikeID] = _address;
+        rentors[_address][_bikeID] = rent;
     }
 
 }
